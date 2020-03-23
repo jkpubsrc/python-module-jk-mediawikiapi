@@ -1,0 +1,52 @@
+{
+	"language": "python3",
+	"name": "jk_mediawikiapi",
+	"version": "0.2020.3.23",
+	"meta": {
+		"description": "This python module provides ways to programmatically work with MediaWiki wikis.",
+		"keywords": [
+			"mediawiki",
+			"mediawiki-api"
+		],
+		"license": "Apache 2.0",
+		"development_status": "alpha",
+		"authors": [
+			{
+				"name": "Jürgen Knauth",
+				"email": "pubsrc@binary-overflow.de"
+			}
+		],
+		"wiki": {
+			"page": "DevDocs:jk_mediawikiapi"
+		}
+	},
+	"repositories": [
+		{
+			"type": "github",
+			"user": "jkpubsrc",
+			"project": "python-module-jk-mediawikiapi",
+			"devon_publish": true
+		},
+		{
+			"type": "pypy",
+			"project": "jk_mediawikiapi",
+			"devon_publish": true
+		}
+	],
+	"source": {
+		"packages": [
+			"jk_mediawikiapi"
+		],
+		"extra_data_files": [
+		],
+		"extra_binary_files": [
+		]
+	},
+	"requirements": {
+		"python_packages": [
+		],
+		"python_packages_dev": [
+		]
+	}
+}
+
