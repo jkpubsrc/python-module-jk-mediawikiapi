@@ -4,7 +4,7 @@
 Introduction
 ------------
 
-This python module provides ways to programmatically work with MediaWiki wikis.
+This python module provides access to a MediaWiki wiki via its API.
 
 Information about this module can be found here:
 

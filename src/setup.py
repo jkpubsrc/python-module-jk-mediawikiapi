@@ -22,7 +22,7 @@ setup(
 		"Development Status :: 3 - Alpha",
 		"License :: OSI Approved :: Apache Software License",
 	],
-	description = "This python module provides ways to programmatically work with MediaWiki wikis.",
+	description = "This python module provides access to a MediaWiki wiki via its API.",
 	download_url = "https://github.com/jkpubsrc/python-module-jk-mediawikiapi/tarball/0.2020.3.23",
 	include_package_data = False,
 	install_requires = [

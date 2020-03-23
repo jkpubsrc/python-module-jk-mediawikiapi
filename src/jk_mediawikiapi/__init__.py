@@ -26,4 +26,3 @@ from .MediaWikiClient import MediaWikiClient
 
 
 
-

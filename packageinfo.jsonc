@@ -3,7 +3,7 @@
 	"name": "jk_mediawikiapi",
 	"version": "0.2020.3.23",
 	"meta": {
-		"description": "This python module provides ways to programmatically work with MediaWiki wikis.",
+		"description": "This python module provides access to a MediaWiki wiki via its API.",
 		"keywords": [
 			"mediawiki",
 			"mediawiki-api"
