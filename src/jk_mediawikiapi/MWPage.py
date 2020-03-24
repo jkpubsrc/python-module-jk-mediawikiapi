@@ -6,7 +6,7 @@ import typing
 from ._dump import DumpMethod
 
 from .MWPageContent import MWPageContent
-from .MWTimeStamp import MWTimeStamp
+from .MWTimestamp import MWTimestamp
 from .MWPageRevision import MWPageRevision
 from .MWNamespaceInfo import MWNamespaceInfo
 

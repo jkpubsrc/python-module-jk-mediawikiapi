@@ -13,9 +13,12 @@ from jk_mediawikiapi import *
 cfg = jk_json.loadFromFile("constants.local.json")
 
 URL = cfg["url"]
-WIKI_USER_NAME = cfg["user"]
-WIKI_PASSWORD = jk_pwdinput.readpwd("Password: ")
 
+WIKI_USER_NAME = cfg["user"]
+WIKI_PASSWORD = jk_pwdinput.readpwd("Password for wiki user " + repr(WIKI_USER_NAME) + ": ")
+
+OTHER_USER = "SomeUser"
+OTHER_USER_PASSWORD = "abc123"
 
 
 

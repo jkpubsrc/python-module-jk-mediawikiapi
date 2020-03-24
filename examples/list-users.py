@@ -14,12 +14,12 @@ from jk_mediawikiapi import *
 
 mwc = MediaWikiClient(URL, WIKI_USER_NAME, WIKI_PASSWORD)
 n = 0
-for namespaeInfo in mwc.namespaces:
+for userInfo in mwc.listUsers(bDebug = True):
 	print()
-	namespaeInfo.dump()
+	userInfo.dump()
 	n += 1
 print()
-print(n, "namespaces.")
+print(n, "users.")
 
 
 

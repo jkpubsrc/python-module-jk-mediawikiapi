@@ -1,6 +1,7 @@
 
 
 
+import sys
 import datetime
 import pytz
 import requests
@@ -10,6 +11,7 @@ import typing
 
 import bs4
 
+import jk_furl
 import jk_typing
 import jk_json
 import jk_version
@@ -22,11 +24,13 @@ from .MWNamespaceInfo import MWNamespaceInfo
 from .MWUserGroupInfo import MWUserGroupInfo
 from .MWExtensionInfo import MWExtensionInfo
 from .MWPageContent import MWPageContent
-from .MWTimeStamp import MWTimeStamp
+from .MWTimestamp import MWTimestamp
 from .MWPageRevision import MWPageRevision
 from .MWPageInfo import MWPageInfo
 from .MWPage import MWPage
 from .MWCategoryInfo import MWCategoryInfo
+from .MWUserInfo import MWUserInfo
+
 
 
 
@@ -62,6 +66,11 @@ class MediaWikiClient(object):
 
 		self.__performLogin(userName, password)
 		self.__siteInfo, self.__namespacesByID, self.__groupsByName = self.__performGetSiteInfo()
+		self.__namespacesByName = {}
+		for n in self.__namespacesByID.values():
+			for name in n.names:
+				self.__namespacesByName[name] = n
+
 		#self.__siteInfoTimeZone = pytz.timezone(self.__siteInfo["timezone"])
 		#self.__siteInfoTimeOffset = self.__siteInfo["timeoffset"]
 		# siteInfoTime = dateutil.parser.parse(self.__siteInfo["time"])		# returns current UTC time of server
@@ -74,6 +83,46 @@ class MediaWikiClient(object):
 	@property
 	def namespaces(self) -> typing.List[MWNamespaceInfo]:
 		return list(self.__namespacesByID.values())
+	#
+
+	@property
+	def namespacesContent(self) -> typing.List[MWNamespaceInfo]:
+		return [ n for n in self.__namespacesByID.values() if n.bContent ]
+	#
+
+	@property
+	def namespaceSpecial(self) -> MWNamespaceInfo:
+		return self.__namespacesByID[-1]
+	#
+
+	@property
+	def namespaceMain(self) -> MWNamespaceInfo:
+		return self.__namespacesByID[0]
+	#
+
+	@property
+	def namespaceUser(self) -> MWNamespaceInfo:
+		return self.__namespacesByID[2]
+	#
+
+	@property
+	def namespaceFile(self) -> MWNamespaceInfo:
+		return self.__namespacesByID[6]
+	#
+
+	@property
+	def namespaceTemplate(self) -> MWNamespaceInfo:
+		return self.__namespacesByID[10]
+	#
+
+	@property
+	def namespaceHelp(self) -> MWNamespaceInfo:
+		return self.__namespacesByID[12]
+	#
+
+	@property
+	def namespaceCategory(self) -> MWNamespaceInfo:
+		return self.__namespacesByID[14]
 	#
 
 	@property
@@ -167,6 +216,11 @@ class MediaWikiClient(object):
 	#### Helper Methods
 	################################################################################################################################
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performGetPageContentHTML(self, pageTitle:str, bDebug:bool = False) -> str:
 		assert self.__bLoggedIn
 
@@ -200,6 +254,11 @@ class MediaWikiClient(object):
 			return response.text
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performGetPageContentHTMLParsed(self, pageTitle:str, bDebug:bool = False) -> bs4.BeautifulSoup:
 		text = self.__performGetPageContentHTML(pageTitle, bDebug)
 		if text:
@@ -212,6 +271,11 @@ class MediaWikiClient(object):
 			return None
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performGetRequest(self, params:dict, bDebug:bool = False):
 		for key in list(params.keys()):
 			v = params[key]
@@ -222,6 +286,9 @@ class MediaWikiClient(object):
 		if bDebug:
 			print("\n" + ("-" * 120) + "\n>>>> REQUEST >>>>")
 			jk_json.prettyPrint(params)
+			url = jk_furl.furl(self.__apiURL)
+			url.args = params
+			print(url)
 
 		response = self.__session.get(url=self.__apiURL, params=params)
 		jsonResponse = response.json()
@@ -233,6 +300,33 @@ class MediaWikiClient(object):
 		return jsonResponse
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def __performGetMessageText(self, messageID:str, bDebug:bool = False) -> str:
+		jsonResponse = self.__performGetRequest({
+			"action": "query",
+			"format": "json",
+			"meta": "allmessages",
+			"ammessages": messageID,
+		}, bDebug=bDebug)
+
+		jMsgResponse = jsonResponse["query"]["allmessages"][0]
+		assert isinstance(jMsgResponse, dict)
+
+		if "missing" in jMsgResponse:
+			return None
+		else:
+			return jMsgResponse["*"]
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performPostRequest(self, params:dict, bDebug:bool = False):
 		for key in list(params.keys()):
 			v = params[key]
@@ -254,6 +348,11 @@ class MediaWikiClient(object):
 		return jsonResponse
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performLogin(self, userName:str, password:str, bDebug:bool = False):
 		if bDebug:
 			print("\n" + ("#" * 120))
@@ -286,6 +385,11 @@ class MediaWikiClient(object):
 			print("\n" + ("#" * 120))
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performGetSiteInfo(self, bDebug:bool = False):
 		assert self.__bLoggedIn
 
@@ -341,9 +445,14 @@ class MediaWikiClient(object):
 	#
 
 	#
-	# Iterates over a query
+	# Perform a query and iterate over the result.
 	#
-	def __queryIterate(self, listCommand:str, bDebug:bool = False):
+	# @param		str listCommand		The command to use for the MediaWiki "list" parameter.
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def __queryIterate(self, listCommand:str, bDebug:bool = False, **kwargs):
 		assert isinstance(listCommand, str)
 		availableCommands = {
 			"allpages": [
@@ -357,9 +466,16 @@ class MediaWikiClient(object):
 					"acprop": "size|hidden",
 				},
 			],
+			"allusers": [
+				"au",
+				{
+					"auprop": "blockinfo|groups|implicitgroups|rights|editcount|registration|centralids"
+				},
+			]
 		}
 		assert listCommand in availableCommands
 		prefix, jsonArgs = availableCommands[listCommand]
+		jsonArgs.update(kwargs)
 
 		accontinue = None
 
@@ -402,6 +518,11 @@ class MediaWikiClient(object):
 				break
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def ____performGetToken(self, tokenType:str, bDebug:bool = False) -> str:
 		assert isinstance(tokenType, str)
 		assert tokenType in [ "login", "csrf", "createaccount", "patrol", "rollback", "userrights", "watch" ]
@@ -425,16 +546,64 @@ class MediaWikiClient(object):
 		return jsonResponse["query"]["tokens"][tokenType + "token"]
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performGetCSRFToken(self, bDebug:bool = False) -> str:
 		return self.____performGetToken("csrf", bDebug=bDebug)
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performGetLoginToken(self, bDebug:bool = False) -> str:
 		return self.____performGetToken("login", bDebug=bDebug)
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def __performGetCreateAccountToken(self, bDebug:bool = False) -> str:
 		return self.____performGetToken("createaccount", bDebug=bDebug)
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def __performGetUserRightsToken(self, bDebug:bool = False) -> str:
+		return self.____performGetToken("userrights", bDebug=bDebug)
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def __validatePassword(self, userName:str, password:str, bDebug:bool = False) -> bool:
+		assert self.__bLoggedIn
+
+		# ----
+
+		jsonRequest = {
+			"action": "validatepassword",
+			"format": "json",
+			"user": userName,
+			"password": password,
+			"email": "example@example.com",
+			"realname": "Manfred Mustermann",
+		}
+
+		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		return jsonResponse["validatepassword"]["validity"] in [ "Good", "Change" ]
 	#
 
 	################################################################################################################################
@@ -463,15 +632,7 @@ class MediaWikiClient(object):
 			if "description" in jExtension:
 				description = jExtension["description"]
 			elif "descriptionmsg" in jExtension:
-				divContent = self.__performGetPageContentHTMLParsed("MediaWiki:" + jExtension["descriptionmsg"], bDebug=bDebug)
-				if divContent:
-					""""
-					<p>Erweitert den Parser um logische Funktionen
-					</p>
-					"""
-					description = divContent.p.text.strip()
-				else:
-					description = None
+				description = self.__performGetMessageText(jExtension["descriptionmsg"], bDebug=bDebug)
 			else:
 				description = None
 
@@ -536,7 +697,7 @@ class MediaWikiClient(object):
 					parentRevisionID=jRevision.get("parentid"),
 					content=None,
 					bIsMinorRevision="minor" in jRevision and jRevision["minor"],
-					timeStamp=MWTimeStamp(jRevision["timestamp"]),
+					timeStamp=MWTimestamp(jRevision["timestamp"]),
 					userName=jRevision["user"],
 					tags=None,
 					sha1=jRevision["sha1"],
@@ -545,25 +706,59 @@ class MediaWikiClient(object):
 			)
 	#
 
-	def listPages(self, bDebug:bool = False) -> typing.Iterator[MWPageInfo]:
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def listPages(self, namespaces:typing.Union[list,tuple,None] = None, bDebug:bool = False) -> typing.Iterator[MWPageInfo]:
+		if namespaces is not None:
+			tempList = []
+			for x in namespaces:
+				if isinstance(x, str):
+					tempList.append(self.__namespacesByName[x])
+				elif isinstance(x, int):
+					tempList.append(self.__namespacesByID[x])
+				elif isinstance(x, MWNamespaceInfo):
+					tempList.append(x)
+			namespaces = tempList
+		else:
+			namespaces = [ self.__namespacesByID[0] ]
+
+		# ----
+
 		assert self.__bLoggedIn
 
 		if bDebug:
 			print("\n" + ("#" * 120))
 
-		for jPageInfo in self.__queryIterate("allpages", bDebug=bDebug):
-			yield MWPageInfo(
-				title = jPageInfo["title"],
-				searchTitle = None,
-				namespace = self.__namespacesByID[jPageInfo["ns"]],
-				pageID = jPageInfo["pageid"],
-				mainRevision = None,
-			)
+		for namespace in namespaces:
+			if bDebug:
+				print("Now listing pages from namespace:")
+				namespace.dump()
+
+			extraArgs = {
+				"apnamespace": namespace.nsID
+			}
+
+			for jPageInfo in self.__queryIterate("allpages", bDebug=bDebug, **extraArgs):
+				yield MWPageInfo(
+					title = jPageInfo["title"],
+					searchTitle = None,
+					namespace = self.__namespacesByID[jPageInfo["ns"]],
+					pageID = jPageInfo["pageid"],
+					mainRevision = None,
+				)
 
 		if bDebug:
 			print("\n" + ("#" * 120))
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def listCategories(self, bDebug:bool = False) -> typing.Iterator[MWCategoryInfo]:
 		assert self.__bLoggedIn
 
@@ -582,6 +777,11 @@ class MediaWikiClient(object):
 			print("\n" + ("#" * 120))
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def logout(self, bDebug:bool = False):
 		assert self.__bLoggedIn
 
@@ -602,6 +802,11 @@ class MediaWikiClient(object):
 			print("\n" + ("#" * 120))
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def getPageContent(self, pageTitle:str, bDebug:bool = False) -> MWPage:
 		assert self.__bLoggedIn
 
@@ -650,7 +855,7 @@ class MediaWikiClient(object):
 					size=jRevision["slots"]["main"]["size"]
 				),
 				bIsMinorRevision="minor" in jRevision and jRevision["minor"],
-				timeStamp=MWTimeStamp(jRevision["timestamp"]),
+				timeStamp=MWTimestamp(jRevision["timestamp"]),
 				userName=jRevision["user"],
 				tags=jRevision["tags"],
 				sha1=jRevision["sha1"],
@@ -661,6 +866,11 @@ class MediaWikiClient(object):
 		return ret
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def getPageContentHTML(self, pageTitle:str, bDebug:bool = False) -> str:
 		assert self.__bLoggedIn
 
@@ -675,6 +885,11 @@ class MediaWikiClient(object):
 		return ret
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def getPageContentHTMLParsed(self, pageTitle:str, bDebug:bool = False) -> bs4.BeautifulSoup:
 		assert self.__bLoggedIn
 
@@ -689,6 +904,11 @@ class MediaWikiClient(object):
 		return ret
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
 	def uploadPageContent(self,
 		pageID:typing.Union[int,None],
 		pageTitle:typing.Union[str,None],
@@ -760,7 +980,7 @@ class MediaWikiClient(object):
 				# create or edit has been performed
 				bIsNew = "new" in jEdit
 				revID = jEdit["newrevid"]
-				timestamp = MWTimeStamp(jEdit["newtimestamp"])
+				timestamp = MWTimestamp(jEdit["newtimestamp"])
 				pageID = jEdit["pageid"]
 				oldRevID = jEdit.get("oldrevid")
 				ret = MWCreatePageResult(pageTitle, pageID, oldRevID, bIsNew, timestamp)
@@ -771,6 +991,277 @@ class MediaWikiClient(object):
 			print("\n" + ("#" * 120))
 
 		return ret
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def listUsers(self, bDebug:bool = False) -> typing.Iterator[MWUserInfo]:
+		assert self.__bLoggedIn
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		for jUserInfo in self.__queryIterate("allusers", bDebug=bDebug):
+			yield MWUserInfo(
+				userID = jUserInfo["userid"],
+				name = jUserInfo["name"],
+				groups = jUserInfo["groups"],
+				implicitGroups = jUserInfo["implicitgroups"],
+				tRegistration = MWTimestamp(jUserInfo["registration"]),
+				rights = jUserInfo["rights"],
+				nEditCount = jUserInfo["editcount"],
+			)
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def getUserInfo(self, userName:str, bDebug:bool = False) -> typing.Union[MWUserInfo,None]:
+		assert isinstance(userName, str)
+
+		assert self.__bLoggedIn
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		userInfo = None
+		for jUserInfo in self.__queryIterate("allusers", bDebug=bDebug):
+			if jUserInfo["name"].lower() == userName.lower():
+				userInfo = MWUserInfo(
+					userID = jUserInfo["userid"],
+					name = jUserInfo["name"],
+					groups = jUserInfo["groups"],
+					implicitGroups = jUserInfo["implicitgroups"],
+					tRegistration = MWTimestamp(jUserInfo["registration"]),
+					rights = jUserInfo["rights"],
+					nEditCount = jUserInfo["editcount"],
+				)
+				break
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return userInfo
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def createUser(self, userName:str, password:str, bDebug:bool = False) -> MWUserInfo:
+		assert isinstance(userName, str)
+		assert userName
+
+		assert isinstance(password, str)
+		assert password
+
+		# ----
+
+		assert self.__bLoggedIn
+
+		# ----
+
+		for userInfo in self.listUsers(bDebug):
+			if userInfo.name.lower() == userName.lower():
+				raise Exception("User already exists: " + repr(userName))
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		bPwdIsValid = self.__validatePassword(userName, password, bDebug=bDebug)
+		if not bPwdIsValid:
+			if bDebug:
+				print("\n" + ("#" * 120))
+
+			raise Exception("The password specified is not usable!")
+
+		token = self.__performGetCreateAccountToken(bDebug)
+
+		jsonRequest = {
+			"action": "createaccount",
+			"format": "json",
+			"createtoken": token,
+			"username": userName,
+			"password": password,
+			"retype": password,
+			"createreturnurl": "http://localhost",
+		}
+
+		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		if jsonResponse["createaccount"]["status"] == "PASS":
+			return self.getUserInfo(userName)
+		elif jsonResponse["createaccount"]["status"] == "FAIL":
+			raise Exception("Creating user " + repr(userName) + " failed! Reason: " + jsonResponse["createaccount"]["messagecode"])
+		else:
+			raise Exception("Creating user " + repr(userName) + " failed!")
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def validatePassword(self, userName:str, password:str, bDebug:bool = False) -> bool:
+		assert isinstance(userName, str)
+		assert userName
+
+		assert isinstance(password, str)
+		assert password
+
+		# ----
+
+		assert self.__bLoggedIn
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		ret = self.__validatePassword(userName, password, bDebug=bDebug)
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return ret
+	#
+
+	#
+	# Adds an (existing) user to an (existing) group. This method is indempotent.
+	# On error an exception is raised.
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	# @return		bool				Returns <c>True</c> if the user has not yet been in the specified group. Returns <c>False</c> if the user already is in that group.
+	#
+	def addUserToGroup(self, user:typing.Union[str,MWUserInfo], group:typing.Union[str,MWUserGroupInfo], bDebug:bool = False) -> bool:
+		assert self.__bLoggedIn
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		# ----
+
+		if isinstance(user, str):
+			assert user
+			userName = user
+			userInfo = self.getUserInfo(userName, bDebug=bDebug)
+			if not userInfo:
+				raise Exception("No such user: " + repr(userName))
+		elif isinstance(user, MWUserInfo):
+			userName = user.name
+			userInfo = user
+		else:
+			raise Exception("Invalid value specified for argument 'user':" + repr(user))
+
+		if isinstance(group, str):
+			assert group
+			if group not in self.__groupsByName:
+				raise Exception("No such group: " + repr(group))
+			groupName = group
+		elif isinstance(group, MWUserGroupInfo):
+			groupName = group.name
+		else:
+			raise Exception("Invalid value specified for argument 'group':" + repr(group))
+
+		# ----
+
+		token = self.__performGetUserRightsToken(bDebug)
+
+		jsonRequest = {
+			"action": "userrights",
+			"format": "json",
+			"userid": userInfo.userID,
+			"add": groupName,
+			"expiry": "never",
+			"token": token,
+		}
+
+		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return groupName in jsonResponse["userrights"]["added"]
+	#
+
+	#
+	# Removes an (existing) user from an (existing) group. This method is indempotent.
+	# On error an exception is raised.
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	# @return		bool				Returns <c>True</c> if the user has not yet been in the specified group. Returns <c>False</c> if the user already is in that group.
+	#
+	def removeUserFromGroup(self, user:typing.Union[str,MWUserInfo], group:typing.Union[str,MWUserGroupInfo], bDebug:bool = False) -> bool:
+		assert self.__bLoggedIn
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		# ----
+
+		if isinstance(user, str):
+			assert user
+			userName = user
+			userInfo = self.getUserInfo(userName, bDebug=bDebug)
+			if not userInfo:
+				raise Exception("No such user: " + repr(userName))
+		elif isinstance(user, MWUserInfo):
+			userName = user.name
+			userInfo = user
+		else:
+			raise Exception("Invalid value specified for argument 'user':" + repr(user))
+
+		if isinstance(group, str):
+			assert group
+			if group not in self.__groupsByName:
+				raise Exception("No such group: " + repr(group))
+			groupName = group
+		elif isinstance(group, MWUserGroupInfo):
+			groupName = group.name
+		else:
+			raise Exception("Invalid value specified for argument 'group':" + repr(group))
+
+		# ----
+
+		token = self.__performGetUserRightsToken(bDebug)
+
+		jsonRequest = {
+			"action": "userrights",
+			"format": "json",
+			"userid": userInfo.userID,
+			"remove": groupName,
+			"expiry": "never",
+			"token": token,
+		}
+
+		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return groupName in jsonResponse["userrights"]["removed"]
 	#
 
 #

@@ -16,6 +16,9 @@ class MWNamespaceInfo(DumpMethod):
 		self.bNonIncludable = bNonIncludable
 		self.bAllowsSubpages = bAllowsSubpages
 		self.nameAlias = nameAlias
+		self.names = [ self.namePublic ]
+		if self.nameCanonical is not None:
+			self.names.append(self.nameCanonical)
 	#
 
 	def __str__(self):

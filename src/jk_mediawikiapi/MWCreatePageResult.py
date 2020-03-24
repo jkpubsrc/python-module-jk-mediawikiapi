@@ -3,13 +3,13 @@
 
 from ._dump import DumpMethod
 
-from .MWTimeStamp import MWTimeStamp
+from .MWTimestamp import MWTimestamp
 
 
 
 class MWCreatePageResult(DumpMethod):
 
-	def __init__(self, title:str, pageID:int, oldRevID:int, bIsNew:bool, timestamp:MWTimeStamp):
+	def __init__(self, title:str, pageID:int, oldRevID:int, bIsNew:bool, timestamp:MWTimestamp):
 		self.title = title
 		self.pageID = pageID
 		self.oldRevID = oldRevID

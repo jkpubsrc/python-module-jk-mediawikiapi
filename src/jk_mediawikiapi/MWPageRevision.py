@@ -6,14 +6,14 @@ import typing
 from ._dump import DumpMethod
 
 from .MWPageContent import MWPageContent
-from .MWTimeStamp import MWTimeStamp
+from .MWTimestamp import MWTimestamp
 
 
 
 
 class MWPageRevision(DumpMethod):
 
-	def __init__(self, revisionID:int, parentRevisionID:typing.Union[int,None], content:MWPageContent, bIsMinorRevision:bool, tags:list, timeStamp:MWTimeStamp, userName:str, sha1:str, size:int):
+	def __init__(self, revisionID:int, parentRevisionID:typing.Union[int,None], content:MWPageContent, bIsMinorRevision:bool, tags:list, timeStamp:MWTimestamp, userName:str, sha1:str, size:int):
 		assert isinstance(revisionID, int)
 		self.revisionID = revisionID
 
@@ -32,7 +32,7 @@ class MWPageRevision(DumpMethod):
 			assert isinstance(tags, list)
 		self.tags = tags
 
-		assert isinstance(timeStamp, MWTimeStamp)
+		assert isinstance(timeStamp, MWTimestamp)
 		self.timeStamp = timeStamp
 
 		assert isinstance(userName, str)

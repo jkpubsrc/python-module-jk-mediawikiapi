@@ -9,7 +9,7 @@ from ._dump import DumpMethod
 
 
 
-class MWTimeStamp(DumpMethod):
+class MWTimestamp(DumpMethod):
 
 	def __init__(self, timeStampText:str):
 		assert isinstance(timeStampText, str)
