@@ -606,6 +606,52 @@ class MediaWikiClient(object):
 		return jsonResponse["validatepassword"]["validity"] in [ "Good", "Change" ]
 	#
 
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def __getVerifyUser(self, user:typing.Union[str,MWUserInfo], bDebug:bool = False) -> MWUserInfo:
+		assert self.__bLoggedIn
+
+		# ----
+
+		if isinstance(user, str):
+			assert user
+			userName = user
+			userInfo = self.getUserInfo(userName, bDebug=bDebug)
+			if not userInfo:
+				raise Exception("No such user: " + repr(userName))
+			return userInfo
+		elif isinstance(user, MWUserInfo):
+			userName = user.name
+			userInfo = user
+			return userInfo
+		else:
+			raise Exception("Invalid value specified for argument 'user':" + repr(user))
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def __getVerifyUserGroup(self, group:typing.Union[str,MWUserGroupInfo], bDebug:bool = False) -> MWUserGroupInfo:
+		assert self.__bLoggedIn
+
+		# ----
+
+		if isinstance(group, str):
+			assert group
+			if group not in self.__groupsByName:
+				raise Exception("No such group: " + repr(group))
+			return self.__groupsByName[group]
+		elif isinstance(group, MWUserGroupInfo):
+			return group
+		else:
+			raise Exception("Invalid value specified for argument 'group':" + repr(group))
+	#
+
 	################################################################################################################################
 	#### Public Methods
 	################################################################################################################################
@@ -1159,27 +1205,11 @@ class MediaWikiClient(object):
 
 		# ----
 
-		if isinstance(user, str):
-			assert user
-			userName = user
-			userInfo = self.getUserInfo(userName, bDebug=bDebug)
-			if not userInfo:
-				raise Exception("No such user: " + repr(userName))
-		elif isinstance(user, MWUserInfo):
-			userName = user.name
-			userInfo = user
-		else:
-			raise Exception("Invalid value specified for argument 'user':" + repr(user))
+		userInfo = self.__getVerifyUser(user, bDebug=bDebug)
+		userName = userInfo.name
 
-		if isinstance(group, str):
-			assert group
-			if group not in self.__groupsByName:
-				raise Exception("No such group: " + repr(group))
-			groupName = group
-		elif isinstance(group, MWUserGroupInfo):
-			groupName = group.name
-		else:
-			raise Exception("Invalid value specified for argument 'group':" + repr(group))
+		groupInfo = self.__getVerifyUserGroup(group, bDebug=bDebug)
+		groupName = groupInfo.name
 
 		# ----
 
@@ -1221,27 +1251,11 @@ class MediaWikiClient(object):
 
 		# ----
 
-		if isinstance(user, str):
-			assert user
-			userName = user
-			userInfo = self.getUserInfo(userName, bDebug=bDebug)
-			if not userInfo:
-				raise Exception("No such user: " + repr(userName))
-		elif isinstance(user, MWUserInfo):
-			userName = user.name
-			userInfo = user
-		else:
-			raise Exception("Invalid value specified for argument 'user':" + repr(user))
+		userInfo = self.__getVerifyUser(user, bDebug=bDebug)
+		userName = userInfo.name
 
-		if isinstance(group, str):
-			assert group
-			if group not in self.__groupsByName:
-				raise Exception("No such group: " + repr(group))
-			groupName = group
-		elif isinstance(group, MWUserGroupInfo):
-			groupName = group.name
-		else:
-			raise Exception("Invalid value specified for argument 'group':" + repr(group))
+		groupInfo = self.__getVerifyUserGroup(group, bDebug=bDebug)
+		groupName = groupInfo.name
 
 		# ----
 
