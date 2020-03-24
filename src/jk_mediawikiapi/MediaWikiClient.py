@@ -15,7 +15,6 @@ import jk_furl
 import jk_typing
 import jk_json
 import jk_version
-import jk_flexdata
 
 
 
@@ -1279,16 +1278,6 @@ class MediaWikiClient(object):
 	#
 
 #
-
-
-
-
-
-
-
-
-
-
 
 
 

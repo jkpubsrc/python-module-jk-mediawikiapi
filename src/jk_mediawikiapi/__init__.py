@@ -1,7 +1,7 @@
 ﻿
 
 
-__version__ = "0.2020.3.23"
+__version__ = "0.2020.3.24"
 
 
 
@@ -18,7 +18,6 @@ from .MWCategoryInfo import MWCategoryInfo
 from .MWUserInfo import MWUserInfo
 
 from .MediaWikiClient import MediaWikiClient
-
 
 
 

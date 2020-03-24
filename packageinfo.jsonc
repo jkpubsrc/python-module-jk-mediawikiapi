@@ -1,7 +1,7 @@
 {
 	"language": "python3",
 	"name": "jk_mediawikiapi",
-	"version": "0.2020.3.23",
+	"version": "0.2020.3.24",
 	"meta": {
 		"description": "This python module provides access to a MediaWiki wiki via its API.",
 		"keywords": [
@@ -44,6 +44,11 @@
 	},
 	"requirements": {
 		"python_packages": [
+			"jk_furl",
+			"jk_typing",
+			"jk_json",
+			"jk_version",
+			"beautifulsoup4"
 		],
 		"python_packages_dev": [
 		]
