@@ -17,8 +17,8 @@ URL = cfg["url"]
 WIKI_USER_NAME = cfg["user"]
 WIKI_PASSWORD = jk_pwdinput.readpwd("Password for wiki user " + repr(WIKI_USER_NAME) + ": ")
 
-OTHER_USER = "SomeUser"
-OTHER_USER_PASSWORD = "abc123"
+OTHER_USER = cfg["someOtherUser"]
+OTHER_USER_PASSWORD = cfg["someOtherUserPwd"]
 
 
 
