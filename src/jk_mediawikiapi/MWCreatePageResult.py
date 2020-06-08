@@ -23,7 +23,7 @@ class MWCreatePageResult(DumpMethod):
 
 	def __str__(self):
 		return "MWCreatePageResult(" \
-			+ ", title=" + repr(self.title) \
+			+ "title=" + repr(self.title) \
 			+ ", pageID=" + repr(self.pageID) \
 			+ ", oldRevID=" + repr(self.oldRevID) \
 			+ ", bIsNew=" + repr(self.bIsNew) \
