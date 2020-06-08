@@ -18,6 +18,7 @@ import jk_version
 
 
 
+from .MWAPIException import MWAPIException
 from .MWCreatePageResult import MWCreatePageResult
 from .MWNamespaceInfo import MWNamespaceInfo
 from .MWUserGroupInfo import MWUserGroupInfo
@@ -50,12 +51,12 @@ class MediaWikiClient(object):
 	################################################################################################################################
 
 	@jk_typing.checkFunctionSignature()
-	def __init__(self, wikiURL:str, userName:str, password:str):
+	def __init__(self, wikiURL:str, userName:str, password:str, bDebug:bool = False):
 		self.__session = requests.Session()
 		if not wikiURL.endswith("/"):
 			wikiURL += "/"
-		self.__apiURL = wikiURL + "/api.php"
-		self.__indexURL = wikiURL + "/index.php"
+		self.__apiURL = wikiURL + "api.php"
+		self.__indexURL = wikiURL + "index.php"
 		self.__userName = userName
 		self.__password = password
 
@@ -63,8 +64,8 @@ class MediaWikiClient(object):
 
 		# ----
 
-		self.__performLogin(userName, password)
-		self.__siteInfo, self.__namespacesByID, self.__groupsByName = self.__performGetSiteInfo()
+		self.__performLogin(userName, password, bDebug)
+		self.__siteInfo, self.__namespacesByID, self.__groupsByName = self.__performGetSiteInfo(bDebug)
 		self.__namespacesByName = {}
 		for n in self.__namespacesByID.values():
 			for name in n.names:
@@ -296,6 +297,9 @@ class MediaWikiClient(object):
 			jk_json.prettyPrint(jsonResponse)
 			print("\n" + ("-" * 120))
 
+		if "error" in jsonResponse:
+			raise MWAPIException(jsonResponse)
+
 		return jsonResponse
 	#
 
@@ -343,6 +347,9 @@ class MediaWikiClient(object):
 			print("\n<<<< RESPONSE <<<<")
 			jk_json.prettyPrint(jsonResponse)
 			print("\n" + ("-" * 120))
+
+		if "error" in jsonResponse:
+			raise MWAPIException(jsonResponse)
 
 		return jsonResponse
 	#
@@ -542,6 +549,9 @@ class MediaWikiClient(object):
 		if bDebug:
 			print("\n" + ("#" * 120))
 
+		if "error" in jsonResponse:
+			raise MWAPIException(jsonResponse)
+
 		return jsonResponse["query"]["tokens"][tokenType + "token"]
 	#
 
@@ -601,6 +611,9 @@ class MediaWikiClient(object):
 		}
 
 		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		if "error" in jsonResponse:
+			raise MWAPIException(jsonResponse)
 
 		return jsonResponse["validatepassword"]["validity"] in [ "Good", "Change" ]
 	#
@@ -1031,6 +1044,131 @@ class MediaWikiClient(object):
 				ret = MWCreatePageResult(pageTitle, pageID, oldRevID, bIsNew, timestamp)
 		else:
 			ret = None
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return ret
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def movePage(self,
+		fromPageID:typing.Union[int,None],
+		fromPageTitle:typing.Union[str,None],
+		toPageTitle:str,
+		reason:str = "",
+		bCreateRedirect:bool = False,
+		bDebug:bool = False) -> bool:
+
+		if fromPageID is not None:
+			assert isinstance(fromPageID, int)
+			assert fromPageTitle is None
+		else:
+			assert isinstance(fromPageTitle, str)
+			assert fromPageTitle
+
+		assert isinstance(toPageTitle, str)
+		assert toPageTitle
+
+		assert isinstance(reason, str)
+
+		assert isinstance(bCreateRedirect, bool)
+
+		# ----
+
+		assert self.__bLoggedIn
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		csrfToken = self.__performGetCSRFToken(bDebug = bDebug)
+
+		jsonRequest = {
+			"action": "move",
+			"format": "json",
+			"to": toPageTitle,
+			"reason": reason,
+			"movetalk": True,
+			"movesubpages": True,
+			"token": csrfToken,
+		}
+		if fromPageID is not None:
+			jsonRequest["fromid"] = fromPageID
+		else:
+			jsonRequest["from"] = fromPageTitle
+		if not bCreateRedirect:
+			jsonRequest["noredirect"] = True
+
+		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		jEdit = jsonResponse["move"]
+		if jEdit["from"]:
+			ret = True
+		else:
+			ret = False
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return ret
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def removePage(self,
+		pageID:typing.Union[int,None],
+		pageTitle:typing.Union[str,None],
+		reason:str = "",
+		bDebug:bool = False) -> bool:
+
+		if pageID is not None:
+			assert isinstance(pageID, int)
+			assert pageTitle is None
+		else:
+			assert isinstance(pageTitle, str)
+			assert pageTitle
+
+		assert isinstance(reason, str)
+
+		# ----
+
+		assert self.__bLoggedIn
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		csrfToken = self.__performGetCSRFToken(bDebug = bDebug)
+
+		jsonRequest = {
+			"action": "delete",
+			"format": "json",
+			"reason": reason,
+			"token": csrfToken,
+		}
+		if pageID is not None:
+			jsonRequest["pageid"] = pageID
+		else:
+			jsonRequest["title"] = pageTitle
+
+		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		jEdit = jsonResponse["edit"]
+		if jEdit["result"] == "Success":
+			# delete has been performed
+			ret = False
+		else:
+			ret = False
 
 		if bDebug:
 			print("\n" + ("#" * 120))

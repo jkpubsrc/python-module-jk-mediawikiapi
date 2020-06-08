@@ -18,7 +18,17 @@ class MWCreatePageResult(DumpMethod):
 	#
 
 	def __bool__(self):
-		return self.bSuccess
+		return True
+	#
+
+	def __str__(self):
+		return "MWCreatePageResult(" \
+			+ ", title=" + repr(self.title) \
+			+ ", pageID=" + repr(self.pageID) \
+			+ ", oldRevID=" + repr(self.oldRevID) \
+			+ ", bIsNew=" + repr(self.bIsNew) \
+			+ ", timestamp=" + repr(self.timestamp) \
+			+ ")"
 	#
 
 	"""

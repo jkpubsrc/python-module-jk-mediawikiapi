@@ -23,7 +23,7 @@ setup(
 		"License :: OSI Approved :: Apache Software License",
 	],
 	description = "This python module provides access to a MediaWiki wiki via its API.",
-	download_url = "https://github.com/jkpubsrc/python-module-jk-mediawikiapi/tarball/0.2020.3.24",
+	download_url = "https://github.com/jkpubsrc/python-module-jk-mediawikiapi/tarball/0.2020.6.8",
 	include_package_data = False,
 	install_requires = [
 		"jk_furl",
@@ -42,7 +42,7 @@ setup(
 		"jk_mediawikiapi",
 	],
 	url = "https://github.com/jkpubsrc/python-module-jk-mediawikiapi",
-	version = "0.2020.3.24",
+	version = "0.2020.6.8",
 	zip_safe = False,
 	long_description = readme(),
 	long_description_content_type="text/markdown",

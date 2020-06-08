@@ -1,9 +1,11 @@
 ﻿
 
 
-__version__ = "0.2020.3.24"
+__version__ = "0.2020.6.8"
 
 
+
+from .MWAPIException import MWAPIException
 
 from .MWCreatePageResult import MWCreatePageResult
 from .MWNamespaceInfo import MWNamespaceInfo
@@ -18,7 +20,6 @@ from .MWCategoryInfo import MWCategoryInfo
 from .MWUserInfo import MWUserInfo
 
 from .MediaWikiClient import MediaWikiClient
-
 
 
 
