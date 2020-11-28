@@ -31,6 +31,7 @@ setup(
 		"jk_json",
 		"jk_version",
 		"beautifulsoup4",
+		"jk_prettyprintobj",
 	],
 	keywords = [
 		"mediawiki",
@@ -41,7 +42,7 @@ setup(
 	packages = [
 		"jk_mediawikiapi",
 	],
-	version = "0.2020.11.28",
+	version = "0.2020.11.28.1",
 	zip_safe = False,
 	long_description = readme(),
 	long_description_content_type="text/markdown",

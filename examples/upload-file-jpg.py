@@ -20,11 +20,12 @@ UPLOAD_FILE_NAME = "WaterDropletsOnLeaf.jpg"
 
 
 
+
 mwc = MediaWikiClient(URL, WIKI_USER_NAME, WIKI_PASSWORD)
 
-mwc.uploadFile(FILE_PATH, UPLOAD_FILE_NAME, bDebug = False)
+ret = mwc.uploadFile(FILE_PATH, UPLOAD_FILE_NAME, bDebug = False)
 
-
+ret.dump()
 
 
 

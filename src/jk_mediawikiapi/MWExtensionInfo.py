@@ -1,7 +1,7 @@
 
 
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 
 
@@ -9,7 +9,7 @@ from ._dump import DumpMethod
 #
 # This class provides information about an installed and active MediaWiki extension.
 #
-class MWExtensionInfo(DumpMethod):
+class MWExtensionInfo(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self, name:str, extensionType:str, author:str, licenseID:str, url:str, version:str, description:str):
 		self.name = name
@@ -34,6 +34,18 @@ class MWExtensionInfo(DumpMethod):
 		print("]")
 	#
 	"""
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"name",
+			"extensionType",
+			"author",
+			"licenseID",
+			"url",
+			"version",
+			"description",
+		]
+	#
 
 #
 

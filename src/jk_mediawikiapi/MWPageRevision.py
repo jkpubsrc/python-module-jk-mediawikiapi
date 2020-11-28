@@ -3,7 +3,7 @@
 
 import typing
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 from .MWPageContent import MWPageContent
 from .MWTimestamp import MWTimestamp
@@ -11,7 +11,7 @@ from .MWTimestamp import MWTimestamp
 
 
 
-class MWPageRevision(DumpMethod):
+class MWPageRevision(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self, revisionID:int, parentRevisionID:typing.Union[int,None], content:MWPageContent, bIsMinorRevision:bool, tags:list, timeStamp:MWTimestamp, userName:str, sha1:str, size:int):
 		assert isinstance(revisionID, int)
@@ -58,6 +58,20 @@ class MWPageRevision(DumpMethod):
 			"bIsMinorRevision": self.bIsMinorRevision,
 		}
 		return ret
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"revisionID",
+			"parentRevisionID",
+			"content",
+			"bIsMinorRevision",
+			"tags",
+			"timeStamp",
+			"userName",
+			"sha1",
+			"size",
+		]
 	#
 
 #

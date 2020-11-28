@@ -1,12 +1,12 @@
 
 
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 
 
 
-class MWPageContent(DumpMethod):
+class MWPageContent(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self, content:str, contentformat:str, contentmodel:str, sha1:str, size:int):
 		assert isinstance(content, str)
@@ -34,6 +34,16 @@ class MWPageContent(DumpMethod):
 			"size": self.size,
 		}
 		return ret
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"content",
+			"contentformat",
+			"contentmodel",
+			"sha1",
+			"size",
+		]
 	#
 
 #

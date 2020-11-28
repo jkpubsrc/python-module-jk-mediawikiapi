@@ -3,7 +3,7 @@
 
 import typing
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 from .MWPageContent import MWPageContent
 from .MWTimestamp import MWTimestamp
@@ -13,7 +13,7 @@ from .MWNamespaceInfo import MWNamespaceInfo
 
 
 
-class MWPageInfo(DumpMethod):
+class MWPageInfo(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self,
 		title:str,
@@ -65,6 +65,15 @@ class MWPageInfo(DumpMethod):
 			s += ", mainRevision=" + str(self.mainRevision.revisionID)
 		s += ")"
 		return s
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"title",
+			"namespace",
+			"pageID",
+			"mainRevision",
+		]
 	#
 
 #

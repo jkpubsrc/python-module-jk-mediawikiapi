@@ -1,13 +1,13 @@
 
 
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 from .MWTimestamp import MWTimestamp
 
 
 
-class MWCreatePageResult(DumpMethod):
+class MWCreatePageResult(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self, title:str, pageID:int, oldRevID:int, bIsNew:bool, timestamp:MWTimestamp):
 		self.title = title
@@ -42,6 +42,16 @@ class MWCreatePageResult(DumpMethod):
 		print("]")
 	#
 	"""
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"title",
+			"pageID",
+			"oldRevID",
+			"bIsNew",
+			"timestamp",
+		]
+	#
 
 #
 

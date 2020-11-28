@@ -3,7 +3,7 @@
 
 import typing
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 from .MWPageContent import MWPageContent
 from .MWTimestamp import MWTimestamp
@@ -13,7 +13,7 @@ from .MWNamespaceInfo import MWNamespaceInfo
 
 
 
-class MWUserInfo(DumpMethod):
+class MWUserInfo(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self,
 		userID:int,
@@ -51,6 +51,18 @@ class MWUserInfo(DumpMethod):
 
 		assert isinstance(nEditCount, int)
 		self.nEditCount = nEditCount
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"userID",
+			"name",
+			"groups",
+			"implicitGroups",
+			"tRegistration",
+			"rights",
+			"nEditCount",
+		]
 	#
 
 #

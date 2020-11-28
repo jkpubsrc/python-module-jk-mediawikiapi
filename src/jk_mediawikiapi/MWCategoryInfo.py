@@ -3,7 +3,7 @@
 
 import typing
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 from .MWPageContent import MWPageContent
 from .MWTimestamp import MWTimestamp
@@ -13,7 +13,7 @@ from .MWNamespaceInfo import MWNamespaceInfo
 
 
 
-class MWCategoryInfo(DumpMethod):
+class MWCategoryInfo(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self,
 		name:str,
@@ -33,6 +33,15 @@ class MWCategoryInfo(DumpMethod):
 
 		assert isinstance(nSubCategories, int)
 		self.nSubCategories = nSubCategories
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"name",
+			"nPages",
+			"nTotalPages",
+			"nSubCategories",
+		]
 	#
 
 #

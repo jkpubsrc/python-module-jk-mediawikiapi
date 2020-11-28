@@ -1560,7 +1560,19 @@ class MediaWikiClient(object):
 
 		# TODO: process response
 
-		ret = None
+		jEdit = jsonResponse["upload"]
+		if jEdit["result"] == "Success":
+			title = jEdit["imageinfo"]["canonicaltitle"],
+			bIsNew = not (("warnings" in jEdit) and ("exists" in jEdit["warnings"]))
+			timestamp = MWTimestamp(jEdit["imageinfo"]["timestamp"])
+			width = jEdit["imageinfo"].get("width")
+			height = jEdit["imageinfo"].get("height")
+			sha1 = jEdit["imageinfo"]["sha1"]
+			mimeType = jEdit["imageinfo"]["mime"]
+			size = jEdit["imageinfo"]["size"]
+			ret = MWUploadFileResult(title, bIsNew, timestamp, mimeType, sha1, size, width, height)
+		else:
+			ret = None
 
 		if bDebug:
 			print("\n" + ("#" * 120))
@@ -1613,9 +1625,12 @@ class MediaWikiClient(object):
 			title = jEdit["imageinfo"]["canonicaltitle"],
 			bIsNew = not (("warnings" in jEdit) and ("exists" in jEdit["warnings"]))
 			timestamp = MWTimestamp(jEdit["imageinfo"]["timestamp"])
-			width = jEdit["imageinfo"]["width"],
-			height = jEdit["imageinfo"]["height"],
-			ret = MWUploadFileResult(title, bIsNew, timestamp, width, height)
+			width = jEdit["imageinfo"].get("width")
+			height = jEdit["imageinfo"].get("height")
+			sha1 = jEdit["imageinfo"]["sha1"]
+			mimeType = jEdit["imageinfo"]["mime"]
+			size = jEdit["imageinfo"]["size"]
+			ret = MWUploadFileResult(title, bIsNew, timestamp, mimeType, sha1, size, width, height)
 		else:
 			ret = None
 

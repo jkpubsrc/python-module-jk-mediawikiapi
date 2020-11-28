@@ -1,12 +1,12 @@
 
 
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 
 
 
-class MWNamespaceInfo(DumpMethod):
+class MWNamespaceInfo(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self, namespaceID:int, nameCanonical:str, namePublic:str, bContent:bool, bNonIncludable:bool, bAllowsSubpages:bool, nameAlias:str):
 		self.namespaceID = namespaceID
@@ -31,6 +31,19 @@ class MWNamespaceInfo(DumpMethod):
 
 	def __repr__(self):
 		return "NameSpace<" + str(self.namespaceID) + ":" + repr(self.nameCanonical) + ">"
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"namespaceID",
+			"bContent",
+			"nameCanonical",
+			"namePublic",
+			"bNonIncludable",
+			"bAllowsSubpages",
+			"nameAlias",
+			"names",
+		]
 	#
 
 #

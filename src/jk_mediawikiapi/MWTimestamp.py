@@ -4,12 +4,14 @@
 import datetime
 import dateutil
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 
 
 
-class MWTimestamp(DumpMethod):
+class MWTimestamp(jk_prettyprintobj.DumpMixin):
+	# @field		str orgText				The time stamp as text as specified by the server
+	# @field		datetime tDateTime		The time stamp as `datetime` after parsing
 
 	def __init__(self, timeStampText:str):
 		assert isinstance(timeStampText, str)
@@ -33,6 +35,13 @@ class MWTimestamp(DumpMethod):
 
 	def __repr__(self):
 		return str(self.tDateTime)
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"orgText",
+			"tDateTime",
+		]
 	#
 
 #

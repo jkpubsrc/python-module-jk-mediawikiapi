@@ -3,7 +3,7 @@
 
 import typing
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 from .MWPageContent import MWPageContent
 from .MWTimestamp import MWTimestamp
@@ -13,7 +13,7 @@ from .MWNamespaceInfo import MWNamespaceInfo
 
 
 
-class MWPage(DumpMethod):
+class MWPage(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self, title:str, searchTitle:typing.Union[str,None], namespace:MWNamespaceInfo, pageID:int, mainRevision:MWPageRevision):
 		assert isinstance(title, str)
@@ -33,6 +33,16 @@ class MWPage(DumpMethod):
 
 		assert isinstance(mainRevision, MWPageRevision)
 		self.mainRevision = mainRevision
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"title",
+			"searchTitle",
+			"namespace",
+			"pageID",
+			"mainRevision",
+		]
 	#
 
 #

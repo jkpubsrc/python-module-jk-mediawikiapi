@@ -1,12 +1,12 @@
 
 
 
-from ._dump import DumpMethod
+import jk_prettyprintobj
 
 
 
 
-class MWUserGroupInfo(DumpMethod):
+class MWUserGroupInfo(jk_prettyprintobj.DumpMixin):
 
 	def __init__(self, name:str, privileges):
 		assert isinstance(name, str)
@@ -15,6 +15,13 @@ class MWUserGroupInfo(DumpMethod):
 		for item in privileges:
 			assert isinstance(item, str)
 		self.privileges = set(privileges)
+	#
+
+	def _dumpVarNames(self) -> list:
+		return [
+			"name",
+			"privileges",
+		]
 	#
 
 #
