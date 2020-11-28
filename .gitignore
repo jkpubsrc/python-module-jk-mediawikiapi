@@ -7,3 +7,4 @@ examples/__pycache__/
 .vscode
 examples/*.log
 examples/constants.local.json
+examples/constants.local.jsonc

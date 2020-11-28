@@ -25,6 +25,17 @@ class MWPageContent(DumpMethod):
 		self.size = size
 	#
 
+	def toJSON(self) -> dict:
+		ret = {
+			"content": self.content,
+			"contentformat": self.contentformat,
+			"contentmodel": self.contentmodel,
+			"sha1": self.sha1,
+			"size": self.size,
+		}
+		return ret
+	#
+
 #
 
 

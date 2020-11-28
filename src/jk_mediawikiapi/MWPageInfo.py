@@ -42,7 +42,29 @@ class MWPageInfo(DumpMethod):
 		if mainRevision is not None:
 			assert isinstance(mainRevision, MWPageRevision)
 		self.mainRevision = mainRevision
+	#
 
+	@property
+	def fullQualifiedName(self) -> str:
+		if self.namespace:
+			if self.namespace.nameCanonical:
+				return self.namespace.nameCanonical + ":" + self.title
+			else:
+				return self.title
+		else:
+			return self.title
+	#
+
+	def __str__(self):
+		s = "MWPageInfo(" \
+			+ "pageID=" + str(self.pageID)
+		if self.namespace is not None:
+			s += ", namespace=" + repr(self.namespace.nameCanonical)
+		s += ", title=" + repr(self.title)
+		if self.mainRevision is not None:
+			s += ", mainRevision=" + str(self.mainRevision.revisionID)
+		s += ")"
+		return s
 	#
 
 #

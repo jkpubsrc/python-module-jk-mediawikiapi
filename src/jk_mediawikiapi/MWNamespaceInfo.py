@@ -8,8 +8,8 @@ from ._dump import DumpMethod
 
 class MWNamespaceInfo(DumpMethod):
 
-	def __init__(self, nsID:int, nameCanonical:str, namePublic:str, bContent:bool, bNonIncludable:bool, bAllowsSubpages:bool, nameAlias:str):
-		self.nsID = nsID
+	def __init__(self, namespaceID:int, nameCanonical:str, namePublic:str, bContent:bool, bNonIncludable:bool, bAllowsSubpages:bool, nameAlias:str):
+		self.namespaceID = namespaceID
 		self.bContent = bContent
 		self.nameCanonical = nameCanonical
 		self.namePublic = namePublic
@@ -17,16 +17,20 @@ class MWNamespaceInfo(DumpMethod):
 		self.bAllowsSubpages = bAllowsSubpages
 		self.nameAlias = nameAlias
 		self.names = [ self.namePublic ]
-		if self.nameCanonical is not None:
-			self.names.append(self.nameCanonical)
+		if nameCanonical:
+			if self.nameCanonical not in self.names:
+				self.names.append(self.nameCanonical)
+		if nameAlias:
+			if self.nameAlias not in self.names:
+				self.names.append(self.nameAlias)
 	#
 
 	def __str__(self):
-		return "NameSpace<" + str(self.nsID) + ":" + repr(self.nameCanonical) + ">"
+		return "NameSpace<" + str(self.namespaceID) + ":" + repr(self.nameCanonical) + ">"
 	#
 
 	def __repr__(self):
-		return "NameSpace<" + str(self.nsID) + ":" + repr(self.nameCanonical) + ">"
+		return "NameSpace<" + str(self.namespaceID) + ":" + repr(self.nameCanonical) + ">"
 	#
 
 #

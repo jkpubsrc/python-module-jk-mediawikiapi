@@ -1,6 +1,7 @@
 
 
 
+import os
 import sys
 import datetime
 import pytz
@@ -8,6 +9,7 @@ import requests
 import dateutil
 import dateutil.parser
 import typing
+import requests
 
 import bs4
 
@@ -30,6 +32,7 @@ from .MWPageInfo import MWPageInfo
 from .MWPage import MWPage
 from .MWCategoryInfo import MWCategoryInfo
 from .MWUserInfo import MWUserInfo
+from .MWUploadFileResult import MWUploadFileResult
 
 
 
@@ -342,6 +345,80 @@ class MediaWikiClient(object):
 			jk_json.prettyPrint(params)
 
 		response = self.__session.post(url=self.__apiURL, data=params)
+
+		if response.status_code >= 500:
+			if bDebug:
+				print("\n<<<< RESPONSE <<<<")
+				print("STATUS:", response.status_code)
+				print("HEADERS:")
+				for k, v in response.headers.items():
+					print("\t" + k + " : " + repr(v))
+				bIsTextHTML = False
+				if "Content-Type" in response.headers:
+					if response.headers["Content-Type"].startswith("text/html;"):
+						bIsTextHTML = True
+				if bIsTextHTML:
+					print("CONTENT:")
+					print(response.content)
+				print("-" * 120)
+			raise Exception("POST failed with status code: " + str(response.status_code))
+
+		jsonResponse = response.json()
+		if bDebug:
+			print("\n<<<< RESPONSE <<<<")
+			jk_json.prettyPrint(jsonResponse)
+			print("\n" + ("-" * 120))
+
+		if "error" in jsonResponse:
+			raise MWAPIException(jsonResponse)
+
+		return jsonResponse
+	#
+
+	def __performPostFileRequest(self, params:dict, filePath:str, uploadFileName:str, bDebug:bool = False):
+		for key in list(params.keys()):
+			v = params[key]
+			if isinstance(v, bool):
+				if v is False:
+					del params[key]
+
+		if bDebug:
+			print("\n" + ("-" * 120) + "\n>>>> REQUEST >>>>")
+			jk_json.prettyPrint(params)
+
+		fileStruct = {
+			"file": (
+				uploadFileName,
+				open(filePath, "rb"),
+				"multipart/form-data",
+			)
+		}
+
+		try:
+			response = self.__session.post(url=self.__apiURL, files=fileStruct, data=params)
+		finally:
+			try:
+				fileStruct["file"][1].close()
+			except Exception as ee:
+				pass
+
+		if response.status_code >= 500:
+			if bDebug:
+				print("\n<<<< RESPONSE <<<<")
+				print("STATUS:", response.status_code)
+				print("HEADERS:")
+				for k, v in response.headers.items():
+					print("\t" + k + " : " + repr(v))
+				bIsTextHTML = False
+				if "Content-Type" in response.headers:
+					if response.headers["Content-Type"].startswith("text/html;"):
+						bIsTextHTML = True
+				if bIsTextHTML:
+					print("CONTENT:")
+					print(response.content)
+				print("-" * 120)
+			raise Exception("POST failed with status code: " + str(response.status_code))
+
 		jsonResponse = response.json()
 		if bDebug:
 			print("\n<<<< RESPONSE <<<<")
@@ -430,7 +507,7 @@ class MediaWikiClient(object):
 				jNamespace["subpages"],
 				None
 			)
-			retNamespaces[ns.nsID] = ns
+			retNamespaces[ns.namespaceID] = ns
 		for jNameSpaceAlias in jsonResponse["query"]["namespacealiases"]:
 			ns = retNamespaces[jNameSpaceAlias["id"]]
 			ns.nameAlias = jNameSpaceAlias["alias"]
@@ -549,9 +626,6 @@ class MediaWikiClient(object):
 		if bDebug:
 			print("\n" + ("#" * 120))
 
-		if "error" in jsonResponse:
-			raise MWAPIException(jsonResponse)
-
 		return jsonResponse["query"]["tokens"][tokenType + "token"]
 	#
 
@@ -612,9 +686,6 @@ class MediaWikiClient(object):
 
 		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
 
-		if "error" in jsonResponse:
-			raise MWAPIException(jsonResponse)
-
 		return jsonResponse["validatepassword"]["validity"] in [ "Good", "Change" ]
 	#
 
@@ -662,6 +733,24 @@ class MediaWikiClient(object):
 			return group
 		else:
 			raise Exception("Invalid value specified for argument 'group':" + repr(group))
+	#
+
+	def __splitFQN(self, fqn:str, namespace:MWNamespaceInfo):
+		if namespace.namespaceID == 0:
+			return None, fqn
+
+		i = fqn.find(":")
+		if i < 0:
+			return None, fqn
+
+		s1 = fqn[:i]
+		if not s1:
+			s1 = None
+
+		if s1 in namespace.names:
+			return s1, fqn[i+1:]
+		else:
+			return None, fqn
 	#
 
 	################################################################################################################################
@@ -745,6 +834,8 @@ class MediaWikiClient(object):
 			jPageInfo = r[0]
 			jRevision = jPageInfo["revisions"][0]
 
+			_, _pageTitle = self.__splitFQN(_pageTitle)
+
 			return MWPageInfo(
 				title=_pageTitle,
 				searchTitle=_searchTitle,
@@ -765,6 +856,7 @@ class MediaWikiClient(object):
 	#
 
 	#
+	# @param		mixed[] namespaces	(Optional) Either an <c>integer</c> number, a <c>string</c> representing the name of the namespace or an instance of <c>MWNamespaceInfo</c>.
 	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
 	#									printed containing information about the direct low level communication with the server.
 	#									The default value is <c>False</c>.
@@ -795,15 +887,20 @@ class MediaWikiClient(object):
 				print("Now listing pages from namespace:")
 				namespace.dump()
 
+			#if namespace.namespaceID < 0:
+			#	raise Exception("Can't list pages of that namespace: " + str(namespace))
+
 			extraArgs = {
-				"apnamespace": namespace.nsID
+				"apnamespace": namespace.namespaceID
 			}
 
 			for jPageInfo in self.__queryIterate("allpages", bDebug=bDebug, **extraArgs):
+				n = self.__namespacesByID[jPageInfo["ns"]]
+				_, temp = self.__splitFQN(jPageInfo["title"], n)
 				yield MWPageInfo(
-					title = jPageInfo["title"],
+					title = temp,
 					searchTitle = None,
-					namespace = self.__namespacesByID[jPageInfo["ns"]],
+					namespace = n,
 					pageID = jPageInfo["pageid"],
 					mainRevision = None,
 				)
@@ -848,7 +945,7 @@ class MediaWikiClient(object):
 
 		csrfToken = self.__performGetCSRFToken(bDebug=bDebug)
 
-		jsonResponse = self.__performGetRequest({
+		jsonResponse = self.__performPostRequest({
 			"action": "logout",
 			"token": csrfToken,
 			"format": "json"
@@ -895,6 +992,11 @@ class MediaWikiClient(object):
 		else:
 			_pageTitle = pageTitle
 			_searchTitle = pageTitle
+
+		n = self.__namespacesByID[jPage["ns"]]
+		s = _pageTitle
+		_, _pageTitle = self.__splitFQN(_pageTitle, n)
+		#print("XXX", s, _, _pageTitle)
 
 		jRevision = jPage["revisions"][0]
 		ret = MWPage(
@@ -1413,6 +1515,114 @@ class MediaWikiClient(object):
 			print("\n" + ("#" * 120))
 
 		return groupName in jsonResponse["userrights"]["removed"]
+	#
+
+	# NOTE: due to a problem in my Wiki installation this method is not yet tested.
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def uploadFileFromURL(self,
+		fileURL:str,
+		uploadFileName:str,
+		bDebug:bool = False) -> typing.Union[MWCreatePageResult,None]:
+
+		assert isinstance(fileURL, str)
+		assert fileURL
+
+		assert isinstance(uploadFileName, str)
+		assert uploadFileName
+
+		assert isinstance(bDebug, bool)
+
+		# ----
+
+		assert self.__bLoggedIn
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		csrfToken = self.__performGetCSRFToken(bDebug = bDebug)
+
+		jsonRequest = {
+			"action": "upload",
+			"format": "json",
+			"filename": uploadFileName,
+			"url": fileURL,
+			"ignorewarnings": 1,
+			"token": csrfToken,
+		}
+
+		jsonResponse = self.__performPostRequest(jsonRequest, bDebug=bDebug)
+
+		# TODO: process response
+
+		ret = None
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return ret
+	#
+
+	#
+	# @param		bool bDebug			(Optional) Specify <c>True</c> or <c>False</c> to enable or disable debugging. If debugging is enabled, text messages are
+	#									printed containing information about the direct low level communication with the server.
+	#									The default value is <c>False</c>.
+	#
+	def uploadFile(self,
+		localFilePath:str,
+		uploadFileName:str,
+		bDebug:bool = False) -> typing.Union[MWUploadFileResult,None]:
+
+		assert isinstance(localFilePath, str)
+		assert localFilePath
+		assert os.path.isfile(localFilePath)
+
+		assert isinstance(uploadFileName, str)
+		assert uploadFileName
+
+		assert isinstance(bDebug, bool)
+
+		# ----
+
+		assert self.__bLoggedIn
+
+		# ----
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		csrfToken = self.__performGetCSRFToken(bDebug = bDebug)
+
+		jsonRequest = {
+			"action": "upload",
+			"format": "json",
+			"filename": uploadFileName,
+			"ignorewarnings": 1,
+			"token": csrfToken,
+		}
+
+		jsonResponse = self.__performPostFileRequest(jsonRequest, localFilePath, uploadFileName, bDebug = bDebug)
+
+		jEdit = jsonResponse["upload"]
+		if jEdit["result"] == "Success":
+			title = jEdit["imageinfo"]["canonicaltitle"],
+			bIsNew = not (("warnings" in jEdit) and ("exists" in jEdit["warnings"]))
+			timestamp = MWTimestamp(jEdit["imageinfo"]["timestamp"])
+			width = jEdit["imageinfo"]["width"],
+			height = jEdit["imageinfo"]["height"],
+			ret = MWUploadFileResult(title, bIsNew, timestamp, width, height)
+		else:
+			ret = None
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return ret
 	#
 
 #

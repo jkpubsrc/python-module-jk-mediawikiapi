@@ -45,6 +45,21 @@ class MWPageRevision(DumpMethod):
 		self.size = size
 	#
 
+	def toJSON(self) -> dict:
+		ret = {
+			"revisionID": self.revisionID,
+			"parentRevisionID": self.parentRevisionID,
+			"content": self.content.toJSON() if self.content is not None else None,
+			"tags": self.tags if self.tags is not None else None,
+			"timeStamp": self.timeStamp.orgText if self.timeStamp is not None else None,
+			"userName": self.userName,
+			"sha1": self.sha1,
+			"size": self.size,
+			"bIsMinorRevision": self.bIsMinorRevision,
+		}
+		return ret
+	#
+
 #
 
 

@@ -1,4 +1,4 @@
-﻿jk_mediawikiapi
+jk_mediawikiapi
 ==========
 
 Introduction

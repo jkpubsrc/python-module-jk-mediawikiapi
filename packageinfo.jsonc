@@ -1,25 +1,34 @@
 {
-	"language": "python3",
-	"name": "jk_mediawikiapi",
-	"version": "0.2020.6.8",
+	"magic": {
+		"magic": "packageinfo",
+		"version": 2
+	},
 	"meta": {
+		"language": "python3",
+		"name": "jk_mediawikiapi",
+		"version": "0.2020.11.28",
 		"description": "This python module provides access to a MediaWiki wiki via its API.",
 		"keywords": [
 			"mediawiki",
 			"mediawiki-api"
 		],
-		"license": "Apache 2.0",
-		"development_status": "alpha",
+		"license": "Apache2",
+		"development_status": "beta",
 		"authors": [
 			{
 				"name": "Jürgen Knauth",
 				"email": "pubsrc@binary-overflow.de"
 			}
 		],
-		"wiki": {
-			"page": "DevDocs:jk_mediawikiapi"
-		}
+		"pakageClass": "python-module",
 	},
+	"documentation": [
+		{
+			"type": "mediawiki",
+			"page": "DevDocs:jk_mediawikiapi",
+			"devon_publish": true
+		}
+	],
 	"repositories": [
 		{
 			"type": "github",
