@@ -42,7 +42,7 @@ setup(
 	packages = [
 		"jk_mediawikiapi",
 	],
-	version = "0.2020.11.28.1",
+	version = "0.2020.11.28.2",
 	zip_safe = False,
 	long_description = readme(),
 	long_description_content_type="text/markdown",
