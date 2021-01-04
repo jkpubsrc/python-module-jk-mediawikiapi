@@ -13,13 +13,27 @@ from jk_mediawikiapi import *
 
 
 mwc = MediaWikiClient(URL, WIKI_USER_NAME, WIKI_PASSWORD)
+
+NAMESPACES = [ "Portal", mwc.namespaceTemplate, "Form", "Property" ]
+
+
+
 n = 0
-for namespaceInfo in mwc.namespaces:
+for pageInfo in mwc.listPages(namespaces=NAMESPACES, bDebug = False):
 	print()
-	namespaceInfo.dump()
+	pageInfo.dump()
 	n += 1
 print()
-print(n, "namespaces.")
+print(n, "pages.")
+
+
+
+
+
+
+
+
+
 
 
 

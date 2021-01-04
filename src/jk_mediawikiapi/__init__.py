@@ -20,6 +20,8 @@ from .MWCategoryInfo import MWCategoryInfo
 from .MWUserInfo import MWUserInfo
 from .MWUploadFileResult import MWUploadFileResult
 
+from .SMWPropertyInfo import SMWPropertyInfo
+
 from .MediaWikiClient import MediaWikiClient
 
 

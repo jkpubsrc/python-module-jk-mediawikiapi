@@ -20,7 +20,7 @@ else:
 URL = cfg["url"]
 
 WIKI_USER_NAME = cfg["user"]
-if "pwd" in cfg:
+if ("pwd" in cfg) and cfg["pwd"]:
 	WIKI_PASSWORD = cfg["pwd"]
 else:
 	WIKI_PASSWORD = jk_pwdinput.readpwd("Password for wiki user " + repr(WIKI_USER_NAME) + ": ")

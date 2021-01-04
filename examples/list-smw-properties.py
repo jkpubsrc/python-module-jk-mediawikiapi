@@ -13,13 +13,22 @@ from jk_mediawikiapi import *
 
 
 mwc = MediaWikiClient(URL, WIKI_USER_NAME, WIKI_PASSWORD)
+
+
+
 n = 0
-for namespaceInfo in mwc.namespaces:
+for propertyInfo in mwc.listSMWProperties(bDebug = False):
 	print()
-	namespaceInfo.dump()
+	propertyInfo.dump()
 	n += 1
 print()
-print(n, "namespaces.")
+print(n, "properties.")
+
+
+
+
+
+
 
 
 

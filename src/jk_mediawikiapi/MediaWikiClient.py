@@ -10,6 +10,7 @@ import dateutil
 import dateutil.parser
 import typing
 import requests
+import json
 
 import bs4
 
@@ -33,6 +34,9 @@ from .MWPage import MWPage
 from .MWCategoryInfo import MWCategoryInfo
 from .MWUserInfo import MWUserInfo
 from .MWUploadFileResult import MWUploadFileResult
+from .SMWPropertyInfo import SMWPropertyInfo
+
+
 
 
 
@@ -70,9 +74,9 @@ class MediaWikiClient(object):
 		self.__performLogin(userName, password, bDebug)
 		self.__siteInfo, self.__namespacesByID, self.__groupsByName = self.__performGetSiteInfo(bDebug)
 		self.__namespacesByName = {}
-		for n in self.__namespacesByID.values():
-			for name in n.names:
-				self.__namespacesByName[name] = n
+		for namespaceInfo in self.__namespacesByID.values():
+			for name in namespaceInfo.names:
+				self.__namespacesByName[name] = namespaceInfo
 
 		#self.__siteInfoTimeZone = pytz.timezone(self.__siteInfo["timezone"])
 		#self.__siteInfoTimeOffset = self.__siteInfo["timeoffset"]
@@ -83,11 +87,17 @@ class MediaWikiClient(object):
 	#### Properties
 	################################################################################################################################
 
+	#
+	# Get a list of all namespaces.
+	#
 	@property
 	def namespaces(self) -> typing.List[MWNamespaceInfo]:
 		return list(self.__namespacesByID.values())
 	#
 
+	#
+	# Get a list of all content namespaces.
+	#
 	@property
 	def namespacesContent(self) -> typing.List[MWNamespaceInfo]:
 		return [ n for n in self.__namespacesByID.values() if n.bContent ]
@@ -280,20 +290,28 @@ class MediaWikiClient(object):
 	#									The default value is <c>False</c>.
 	#
 	def __performGetRequest(self, params:dict, bDebug:bool = False):
-		for key in list(params.keys()):
+		# preprocess the parameters
+		params2 = {}
+		for key in params.keys():
 			v = params[key]
 			if isinstance(v, bool):
 				if v is False:
-					del params[key]
+					params2[key] = v
+			elif isinstance(v, dict):
+				# serialize JSON data values; this fix is needed for SMW queries: here JSON data is passed sometimes
+				params2[key] = json.dumps(v)
+			else:
+				params2[key] = v
 
 		if bDebug:
 			print("\n" + ("-" * 120) + "\n>>>> REQUEST >>>>")
 			jk_json.prettyPrint(params)
 			url = jk_furl.furl(self.__apiURL)
-			url.args = params
+			url.args = params2
 			print(url)
 
-		response = self.__session.get(url=self.__apiURL, params=params)
+		# now perform the request
+		response = self.__session.get(url=self.__apiURL, params=params2)
 		jsonResponse = response.json()
 		if bDebug:
 			print("\n<<<< RESPONSE <<<<")
@@ -511,7 +529,6 @@ class MediaWikiClient(object):
 		for jNameSpaceAlias in jsonResponse["query"]["namespacealiases"]:
 			ns = retNamespaces[jNameSpaceAlias["id"]]
 			ns.nameAlias = jNameSpaceAlias["alias"]
-
 
 		retUserGroups = {}
 		for jUserGroup in jsonResponse["query"]["usergroups"]:
@@ -758,9 +775,20 @@ class MediaWikiClient(object):
 	################################################################################################################################
 
 	#
+	# Get a specific namespace
+	#
+	def getNamespace(self, identifier:typing.Union[str,int]) -> typing.Union[MWNamespaceInfo,None]:
+		if isinstance(identifier, int):
+			return self.__namespacesByID.get(identifier)
+		elif isinstance(identifier, str):
+			return self.__namespacesByName.get(identifier)
+		return None
+	#
+
+	#
 	# @return		MWExtensionInfo[]		Returns a list of MWExtensionInfo objects
 	#
-	def listExtensions(self, bDebug:bool = False) -> list:
+	def listExtensions(self, bDebug:bool = False) -> typing.List[MWExtensionInfo]:
 		assert self.__bLoggedIn
 
 		if bDebug:
@@ -793,6 +821,39 @@ class MediaWikiClient(object):
 				description,
 			)
 			ret.append(ei)
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		return ret
+	#
+
+	#
+	# @return		SMWPropertyInfo[]		Returns a list of SMWPropertyInfo objects
+	#
+	def listSMWProperties(self, bDebug:bool = False) -> typing.List[SMWPropertyInfo]:
+		assert self.__bLoggedIn
+
+		if bDebug:
+			print("\n" + ("#" * 120))
+
+		jsonResponse = self.__performGetRequest({
+			"action": "smwbrowse",
+			"browse": "property",
+			"params": {
+				"search": "*",
+				"limit": 1000000,
+			},
+			"format": "json",
+		}, bDebug=bDebug)
+
+		ret = []
+		for propName, jPropData in jsonResponse["query"].items():
+			pi = SMWPropertyInfo(
+				propName,
+				jPropData["label"],
+			)
+			ret.append(pi)
 
 		if bDebug:
 			print("\n" + ("#" * 120))
@@ -861,7 +922,7 @@ class MediaWikiClient(object):
 	#									printed containing information about the direct low level communication with the server.
 	#									The default value is <c>False</c>.
 	#
-	def listPages(self, namespaces:typing.Union[list,tuple,None] = None, bDebug:bool = False) -> typing.Iterator[MWPageInfo]:
+	def listPages(self, namespaces:typing.Union[list,tuple,set,None] = None, bDebug:bool = False) -> typing.Iterator[MWPageInfo]:
 		if namespaces is not None:
 			tempList = []
 			for x in namespaces:
