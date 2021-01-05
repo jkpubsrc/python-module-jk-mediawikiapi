@@ -1,7 +1,7 @@
 ﻿
 
 
-__version__ = "0.2020.11.28.2"
+__version__ = "0.2021.1.5"
 
 
 
@@ -23,7 +23,6 @@ from .MWUploadFileResult import MWUploadFileResult
 from .SMWPropertyInfo import SMWPropertyInfo
 
 from .MediaWikiClient import MediaWikiClient
-
 
 
 

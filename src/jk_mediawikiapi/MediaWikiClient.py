@@ -893,14 +893,19 @@ class MediaWikiClient(object):
 
 			r = jsonResponse["query"]["pages"]
 			jPageInfo = r[0]
+			if "missing" in jPageInfo:
+				return None
+
 			jRevision = jPageInfo["revisions"][0]
 
-			_, _pageTitle = self.__splitFQN(_pageTitle)
+			namespace = self.__namespacesByID[jPageInfo["ns"]]
+
+			_, _pageTitle = self.__splitFQN(_pageTitle, namespace)
 
 			return MWPageInfo(
 				title=_pageTitle,
 				searchTitle=_searchTitle,
-				namespace=self.__namespacesByID[jPageInfo["ns"]],
+				namespace=namespace,
 				pageID=jPageInfo["pageid"],
 				mainRevision=MWPageRevision(
 					revisionID=jRevision["revid"],

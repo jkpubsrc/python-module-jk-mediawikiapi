@@ -14,7 +14,7 @@ from jk_mediawikiapi import *
 
 mwc = MediaWikiClient(URL, WIKI_USER_NAME, WIKI_PASSWORD)
 
-NAMESPACES = [ "Portal", mwc.namespaceTemplate, "Form", "Property" ]
+NAMESPACES = [ "Portal", "Template", "Form", "Property" ]
 
 
 
