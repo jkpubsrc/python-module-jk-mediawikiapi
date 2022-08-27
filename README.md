@@ -8,7 +8,7 @@ This python module provides access to a MediaWiki wiki via its API.
 
 Information about this module can be found here:
 
-* [github.org](https://github.com/jkpubsrc/python-module-jk-mediawikiapi)
+* [github.com](https://github.com/jkpubsrc/python-module-jk-mediawikiapi)
 * [pypi.python.org](https://pypi.python.org/pypi/jk_mediawikiapi)
 
 Why this module?
