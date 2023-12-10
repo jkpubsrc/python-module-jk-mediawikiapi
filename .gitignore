@@ -8,3 +8,5 @@ examples/__pycache__/
 examples/*.log
 examples/constants.local.json
 examples/constants.local.jsonc
+**/*.old
+testing/test.jsonc

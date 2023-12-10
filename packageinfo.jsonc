@@ -6,7 +6,7 @@
 	"meta": {
 		"language": "python3",
 		"name": "jk_mediawikiapi",
-		"version": "0.2021.1.5",
+		"version": "0.2023.12.10",
 		"description": "This python module provides access to a MediaWiki wiki via its API.",
 		"keywords": [
 			"mediawiki",
@@ -20,7 +20,7 @@
 				"email": "pubsrc@binary-overflow.de"
 			}
 		],
-		"pakageClass": "python-module",
+		"packageClass": "python-module",
 	},
 	"documentation": [
 		{
@@ -37,7 +37,7 @@
 			"devon_publish": true
 		},
 		{
-			"type": "pypy",
+			"type": "pypi",
 			"project": "jk_mediawikiapi",
 			"devon_publish": true
 		}
